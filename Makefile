@@ -4,7 +4,7 @@ CPP = gcc
 
 FLAGS = -Wall -Wextra -Werror
 
-SRC = src/parser.c src/utils.c main.c
+SRC = src/parser.c src/utils.c src/ft_ping.c main.c
 
 HEADER = ft_ping.h
 
