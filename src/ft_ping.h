@@ -22,6 +22,12 @@ typedef struct ping_opt
     struct ping_opt *next;
 } ping_opt;
 
+typedef struct ft_icmp
+{
+    struct icmphdr *icmp_header;
+    void *data;
+} icmp_h;
+
 typedef struct ping_cmd
 {
     char *destination;
@@ -32,8 +38,9 @@ typedef struct ping_cmd
 typedef struct ping_packet
 {
     struct addrinfo *address;
-    uint16_t id;
-    uint16_t sequence;
+    uint16_t        id;
+    uint16_t        sequence;
+    int             socket;
 } p_packet;
 
 extern p_packet *ping_request;
@@ -55,9 +62,13 @@ void ping_destination_check(char **destination, const char *arg, struct addrinfo
 /* Ping Functions */
 void setup_ping_socket(void);
 struct icmphdr prep_echo_request(uint16_t pid, uint16_t seq);
-uint16_t calcualte_checksum(void);
+uint16_t calcualte_checksum(uint16_t *data);
 void send_request(void);
 void ping_loop(void);
 void ping_send_handler(int signal);
+void ping_send_echo(void);
+void ping_init(p_cmd * ping_command);
+void socket_init(void);
+void ping_echo_replay(void);
 
 #endif
