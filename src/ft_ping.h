@@ -15,10 +15,12 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <sys/time.h>
+#include <arpa/inet.h>
 
 #define BUFFER 65536
 #define REQ_BUFF 1024
 #define PAYLOAD_BUFF 56
+#define OPTIONS 7
 
 #define HELP 0
 #define VERSION 1
@@ -27,20 +29,14 @@
 #define COUNT 4
 #define DEADLINE 5
 #define SEND_BUFF 6
+#define MAX(x, y) (x > y ? x : y)
 
 /* Ping Structrues*/
-typedef struct ping_opt
-{
-    short option;
-    bool has_value;
-    size_t value;
-    struct ping_opt *next;
-} ping_opt;
 
 typedef struct ft_icmp
 {
-    struct icmphdr  icmp_header;
-    unsigned char   data[56];
+    struct icmphdr icmp_header;
+    unsigned char data[56];
 } icmp_h;
 
 typedef struct destionation_sockaddr
@@ -52,24 +48,24 @@ typedef struct destionation_sockaddr
 typedef struct ping_cmd
 {
     char *destination;
-    ping_opt *options;
+    char network_repr[INET_ADDRSTRLEN];
+    int options[OPTIONS];
     dest_sockaddr dest_sockaddr;
 } p_cmd;
 
 typedef struct ping_packet
 {
-    p_cmd *ping_command;
-    uint16_t id;
-    uint16_t sequence;
-    int socket;
-    size_t packet_sent;
-    size_t packet_received;
-    size_t received_bytes;
-    struct timeval start_time;
-    // start time
-    // packets sent
-    // packet recieved
-    // recieved bytes
+    p_cmd       *ping_command;
+    uint16_t    id;
+    uint16_t    sequence;
+    uint16_t    packet_sent;
+    uint16_t    packet_received;
+    uint16_t    received_bytes;
+    u_int16_t   bytes_sent;
+    size_t      ping_counter;
+    int         socket;
+    bool        rtt;
+    double      total;
 } p_packet;
 
 extern p_packet *ping_request;
@@ -77,17 +73,13 @@ extern p_packet *ping_request;
 /*   Utils Functions */
 void ping_help(void);
 void error_exit(const char *error_msg);
-ping_opt *create_option_list(const short option, bool has_value, ...);
-ping_opt *last_option(ping_opt *ping_opt_list);
-void add_option_list(ping_opt **ping_opt_list, ping_opt *ping_opt);
-void print_ping_command(p_cmd *ping_command);
 dest_sockaddr get_sock_addr(const char *host_addrr);
 size_t get_option_value(const char *value);
 
 /* Ping Parser Functions*/
 p_cmd *ping_parser(int arg_num, const char **args);
-void ping_option_check(ping_opt **options, const char *arg, const char *value);
-void ping_destination_check(char **destination, const char *arg, dest_sockaddr *dest_addr);
+void ping_option_check(p_cmd **ping_cmd, const char *arg, const char *value);
+void ping_destination_check(p_cmd **ping_command, const char *arg, dest_sockaddr *dest_addr);
 
 /* Ping Functions */
 void setup_ping_socket(void);
@@ -96,9 +88,16 @@ uint16_t calcualte_checksum(unsigned char *data);
 void send_request(void);
 void ping_loop(void);
 void ping_send_handler(int signal);
+void ping_exit_hanlder(int signal);
 void ping_send_echo(void);
 void ping_init(p_cmd *ping_command);
 void socket_init(void);
 void ping_echo_replay(void);
+double calculate_rtt(struct timeval *sending_time);
+
+/* Ping Output Functions */
+void print_ping_start(void);
+void print_ping_packet(const int seq, struct timeval *sending_time);
+void print_ping_stats(void);
 
 #endif

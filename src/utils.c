@@ -16,58 +16,6 @@ void error_exit(const char *error_msg)
     exit(1);
 }
 
-ping_opt *create_option_list(const short option, bool has_value, ...)
-{
-    va_list args;
-    va_start(args, has_value);
-    ping_opt *ping_options = (ping_opt *)malloc(sizeof(ping_opt));
-    if (!ping_options)
-        error_exit("Malloc: Memory Allocation Error");
-    ping_options->option = option;
-    if (has_value)
-        ping_options->value = va_arg(args, size_t);
-    ping_options->next = NULL;
-    va_end(args);
-    return ping_options;
-}
-
-ping_opt *last_option(ping_opt *ping_opt_list)
-{
-    ping_opt *ping_temp = ping_opt_list;
-
-    while (ping_temp->next != NULL)
-    {
-        ping_temp = ping_temp->next;
-    }
-    return ping_temp;
-}
-
-void add_option_list(ping_opt **ping_opt_list, ping_opt *new_option)
-{
-    ping_opt *last_option_list;
-
-    if (*ping_opt_list == NULL)
-        (*ping_opt_list) = new_option;
-    else
-    {
-        last_option_list = last_option(*ping_opt_list);
-        last_option_list->next = new_option;
-    }
-}
-
-void print_ping_command(p_cmd *ping_command)
-{
-    ping_opt *options = ping_command->options;
-    printf("Destination: %s\n", ping_command->destination);
-    printf("Options: \n");
-
-    while (options != NULL)
-    {
-        printf("Option: %d\n", options->option);
-        options = options->next;
-    }
-}
-
 size_t get_option_value(const char *value)
 {
     if (!value)
@@ -81,4 +29,59 @@ size_t get_option_value(const char *value)
         }
     }
     return atoi(value);
+}
+
+void print_ping_start(void)
+{
+    printf("FT_PING %s (%s) %d() bytes of data.\n", ping_request->ping_command->destination, ping_request->ping_command->network_repr, ping_request->bytes_sent);
+
+}
+
+double calculate_rtt(struct timeval *sending_time)
+{
+    struct timeval receiving_time;
+    double rtt;
+    
+    if (gettimeofday(&receiving_time, NULL) != 0)
+        error_exit("Get Time of Day Error");
+    rtt = (receiving_time.tv_sec - (*sending_time).tv_sec) * 1000 + ((receiving_time.tv_usec - (*sending_time).tv_usec) * 0.001);
+    return rtt;
+}
+
+void print_ping_packet(const int seq, struct timeval *sending_time)
+{
+    if (ping_request->ping_command->options[NUMERIC_ONLY] != -1)
+    {
+        if (ping_request->rtt)
+            printf("%d bytes from xx (%s): icmp_seq=%d ttl=x time=%.2f ms\n", ping_request->bytes_sent, ping_request->ping_command->network_repr, seq, calculate_rtt(sending_time));
+        else
+            printf("%d bytes from xx (%s): icmp_seq=%d ttl=x \n", ping_request->bytes_sent, ping_request->ping_command->network_repr, seq);
+    }
+    else
+    {
+        if (ping_request->rtt)
+            printf("%d bytes from xx (%s): icmp_seq=%d ttl=x time=%.2f ms\n", ping_request->bytes_sent, ping_request->ping_command->network_repr, seq, calculate_rtt(sending_time));
+        else
+            printf("%d bytes from xx (%s): icmp_seq=%d ttl=x\n", ping_request->bytes_sent, ping_request->ping_command->network_repr, seq);
+
+    }
+}
+
+void print_ping_stats(void)
+{
+    // double loss;
+    // double min;
+    // double 
+
+    // loss = (ping_request->packet_received / ping_request->packet_sent) * 100;
+    // printf("--- %s ft_ping statistics ---\n", ping_request->ping_command->destination);
+    // printf("%d packets transmitted, %d received, %.f%% packet loss, time %.0f\n", ping_request->packet_sent, ping_request->packet_received, loss);
+    // printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n");
+    printf("END\n");
+}
+
+void ping_exit_hanlder(int signal)
+{
+    print_ping_stats();
+    exit(0);
 }
