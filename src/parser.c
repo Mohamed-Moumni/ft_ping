@@ -1,7 +1,9 @@
 #include "ft_ping.h"
 
-void ping_option_check(ping_opt **options, const char *arg)
+void ping_option_check(ping_opt **options, const char *arg, const char *value)
 {
+    size_t count;
+
     if (strlen(arg) != 2 || arg[1] == '-')
         error_exit("ft_ping: invalid Option");
     else
@@ -9,13 +11,25 @@ void ping_option_check(ping_opt **options, const char *arg)
         switch (arg[1])
         {
         case 'h':
-            add_option_list(options, create_option_list(HELP));
+            add_option_list(options, create_option_list(HELP, false));
             break;
         case 'V':
-            add_option_list(options, create_option_list(VERSION));
+            add_option_list(options, create_option_list(VERSION, false));
             break;
         case 'v':
-            add_option_list(options, create_option_list(VERBOSE));
+            add_option_list(options, create_option_list(VERBOSE, false));
+            break;
+        case 'n':
+            add_option_list(options, create_option_list(NUMERIC_ONLY, false));
+            break;
+        case 'c':
+            add_option_list(options, create_option_list(COUNT, true, get_option_value(value)));
+            break;
+        case 'w':
+            add_option_list(options, create_option_list(DEADLINE, true, get_option_value(value)));
+            break;
+        case 's':
+            add_option_list(options, create_option_list(SEND_BUFF, true, get_option_value(value)));
             break;
         default:
             error_exit("ft_ping: Invalid Option");
@@ -23,41 +37,51 @@ void ping_option_check(ping_opt **options, const char *arg)
     }
 }
 
-void ping_destination_check(char **destination, const char *arg, struct addrinfo **result)
+void ping_destination_check(char **destination, const char *arg, dest_sockaddr *dest_addr)
 {
+    // printf("ping_destination_check\n");
     (*destination) = (char *)arg;
-    (*result) = get_addr_info((*destination));
+    (*dest_addr) = get_sock_addr(arg);
+    // printf("finish ping_destination_check\n");
 }
 
 p_cmd *ping_parser(int arg_num, const char **args)
 {
+    // printf("Start Parser\n");
     p_cmd *ping_command;
 
     ping_command = malloc(sizeof(p_cmd));
     if (!ping_command)
-        error_exit("Malloc: Memory Allocation Error");
+        error_exit("Malloc Ping Command: Memory Allocation Error");
     ping_command->options = NULL;
     ping_command->destination = NULL;
-    ping_command->addr = NULL;
 
     for (size_t i = 0; i < arg_num; i++)
     {
         if (args[i][0] == '-')
-            ping_option_check(&ping_command->options, args[i]);
+        {
+            if (i + 1 < arg_num)
+                ping_option_check(&ping_command->options, args[i], args[i + 1]);
+            else
+                ping_option_check(&ping_command->options, args[i], NULL);
+        }
         else
-            ping_destination_check(&ping_command->destination, args[i], &ping_command->addr);
+            ping_destination_check(&ping_command->destination, args[i], &ping_command->dest_sockaddr);
     }
     if (!ping_command->destination)
         error_exit("Destination address required");
+    // printf("Finish Parser\n");
     return ping_command;
 }
 
-struct addrinfo *get_addr_info(const char *host_addrr)
+dest_sockaddr get_sock_addr(const char *host_addrr)
 {
+    // printf("start getsokc_addr\n");
     struct addrinfo *result;
     struct addrinfo hints;
     struct addrinfo *rp;
-    char address[128];
+    struct sockaddr *destination_sockaddr;
+    dest_sockaddr dest_address;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
@@ -66,23 +90,21 @@ struct addrinfo *get_addr_info(const char *host_addrr)
     hints.ai_protocol = 0;
 
     int s = getaddrinfo(host_addrr, NULL, &hints, &result);
+    destination_sockaddr = NULL;
     if (s != 0)
         error_exit(gai_strerror(s));
-    // for (rp = result; rp != NULL; rp = rp->ai_next)
-    // {
-    //     void *addr;
-    //     printf("ai_family: %d\n", rp->ai_family);
-    //     printf("ai_socket: %d\n", rp->ai_socktype);
-    //     printf("ai_flags: %d\n", rp->ai_flags);
-    //     printf("ai_protocol: %d\n", rp->ai_protocol);
-    //     if (rp->ai_family == AF_INET)
-    //     {
-    //         struct sockaddr_in *ipv4 = (struct sockaddr_in *)rp->ai_addr;
-    //         addr = &(ipv4->sin_addr);
-    //     }
-    //     inet_ntop(rp->ai_family, addr, address);
-    //     printf("address: %s\n", address);
-    //     printf("---------------------------------------\n");
-    // }
-    return result;
+    for (rp = result; rp != NULL; rp = rp->ai_next)
+    {
+        if (rp->ai_family == AF_INET && rp->ai_addr)
+        {
+            destination_sockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr));
+            destination_sockaddr = memcpy(destination_sockaddr, rp->ai_addr, sizeof(rp->ai_addr));
+            dest_address.dest_addr = destination_sockaddr;
+            dest_address.addr_len = rp->ai_addrlen;
+            // printf("finish getsokc_addr\n");
+            return dest_address;
+        }
+    }
+    freeaddrinfo(result);
+    error_exit("get addr info address not found");
 }

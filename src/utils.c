@@ -16,13 +16,18 @@ void error_exit(const char *error_msg)
     exit(1);
 }
 
-ping_opt *create_option_list(const short option)
+ping_opt *create_option_list(const short option, bool has_value, ...)
 {
+    va_list args;
+    va_start(args, has_value);
     ping_opt *ping_options = (ping_opt *)malloc(sizeof(ping_opt));
     if (!ping_options)
         error_exit("Malloc: Memory Allocation Error");
     ping_options->option = option;
+    if (has_value)
+        ping_options->value = va_arg(args, size_t);
     ping_options->next = NULL;
+    va_end(args);
     return ping_options;
 }
 
@@ -61,4 +66,19 @@ void print_ping_command(p_cmd *ping_command)
         printf("Option: %d\n", options->option);
         options = options->next;
     }
+}
+
+size_t get_option_value(const char *value)
+{
+    if (!value)
+        error_exit("option requires an argument --");
+    else
+    {
+        for (size_t i = 0; i < strlen(value); i++)
+        {
+            if (!isdigit(value[i]))
+                error_exit("Invalid Option value");
+        }
+    }
+    return atoi(value);
 }
