@@ -1,30 +1,15 @@
 #include "ft_ping.h"
 
-uint16_t calculate_checksum(unsigned char *data, size_t data_len)
-{
-    uint16_t checksum;
-    uint16_t odd_byte;
-    uint32_t sum;
-
-    sum = 0;
-    odd_byte = 0;
-    while (data_len > 1)
-    {
-        sum += *(data);
-        data++;
-        data_len--;
-    }
-
-    if (data_len == 1)
-    {
-        *(unsigned char *)&odd_byte = *(unsigned char *)data;
-        sum += odd_byte;
-    }
-
-    sum += (sum >> 16) + (sum & 0xffff);
+unsigned short calculate_checksum(void *b, int len) {
+    unsigned short *buf = b;
+    unsigned int sum = 0;
+    for (; len > 1; len -= 2)
+        sum += *buf++;
+    if (len == 1)
+        sum += *(unsigned char *)buf;
+    sum = (sum >> 16) + (sum & 0xFFFF);
     sum += (sum >> 16);
-    checksum = ~sum;
-    return checksum;
+    return ~sum;
 }
 
 void ping_loop(void)
@@ -44,7 +29,7 @@ void ping_send_handler(int signal)
 
 void ping_echo_replay(void)
 {
-    printf("Ping Echo Replay\n");
+    // printf("Ping Echo Replay\n");
     char recv_buff[BUFFER];
     struct iphdr *ip_header;
     icmp_h *payload;
@@ -107,20 +92,22 @@ void ping_echo_replay(void)
 
 void ping_send_echo(void)
 {
-    printf("Ping Send Echo Call\n");
-    char buffer[16];
+    // printf("Ping Send Echo Call\n");
+    // printf("ID %d\n", ping_request->id);
+    char buffer[REQ_BUFF];
     icmp_h *buffer_send;
     size_t data_len;
 
-    memset(buffer, 0, 16);
+    memset(buffer, 0, REQ_BUFF);
 
     buffer_send = (icmp_h *)buffer;
     buffer_send->icmp_header.code = 0;
     buffer_send->icmp_header.type = 8;
-    buffer_send->icmp_header.un.echo.sequence = ping_request->sequence++;
     buffer_send->icmp_header.un.echo.id = ping_request->id;
+    buffer_send->icmp_header.un.echo.sequence = ping_request->sequence++;
     buffer_send->icmp_header.checksum = 0;
     data_len = sizeof(buffer_send->icmp_header);
+    // printf("data Len: %ld\n", data_len);
     buffer_send->icmp_header.checksum = calculate_checksum(buffer, data_len);
     // printf("Recv code %d\n", buffer_send->icmp_header.code);
     // printf("Recv type %d\n", buffer_send->icmp_header.type);

@@ -81,6 +81,7 @@ dest_sockaddr get_sock_addr(const char *host_addrr)
     struct addrinfo hints;
     struct addrinfo *rp;
     struct sockaddr *destination_sockaddr;
+    struct sockaddr_in *socka_in;
     dest_sockaddr dest_address;
 
     memset(&hints, 0, sizeof(hints));
@@ -99,6 +100,7 @@ dest_sockaddr get_sock_addr(const char *host_addrr)
         {
             destination_sockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr));
             destination_sockaddr = memcpy(destination_sockaddr, rp->ai_addr, sizeof(rp->ai_addr));
+            socka_in = (struct sockaddr_in *)destination_sockaddr;
             dest_address.dest_addr = destination_sockaddr;
             dest_address.addr_len = rp->ai_addrlen;
             // printf("finish getsokc_addr\n");

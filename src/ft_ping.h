@@ -16,6 +16,7 @@
 #include <ctype.h>
 
 #define BUFFER 65536
+#define REQ_BUFF 1024
 
 #define HELP 0
 #define VERSION 1
