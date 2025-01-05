@@ -39,15 +39,12 @@ void ping_option_check(ping_opt **options, const char *arg, const char *value)
 
 void ping_destination_check(char **destination, const char *arg, dest_sockaddr *dest_addr)
 {
-    // printf("ping_destination_check\n");
     (*destination) = (char *)arg;
     (*dest_addr) = get_sock_addr(arg);
-    // printf("finish ping_destination_check\n");
 }
 
 p_cmd *ping_parser(int arg_num, const char **args)
 {
-    // printf("Start Parser\n");
     p_cmd *ping_command;
 
     ping_command = malloc(sizeof(p_cmd));
@@ -70,18 +67,15 @@ p_cmd *ping_parser(int arg_num, const char **args)
     }
     if (!ping_command->destination)
         error_exit("Destination address required");
-    // printf("Finish Parser\n");
     return ping_command;
 }
 
 dest_sockaddr get_sock_addr(const char *host_addrr)
 {
-    // printf("start getsokc_addr\n");
     struct addrinfo *result;
     struct addrinfo hints;
     struct addrinfo *rp;
     struct sockaddr *destination_sockaddr;
-    struct sockaddr_in *socka_in;
     dest_sockaddr dest_address;
 
     memset(&hints, 0, sizeof(hints));
@@ -100,10 +94,8 @@ dest_sockaddr get_sock_addr(const char *host_addrr)
         {
             destination_sockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr));
             destination_sockaddr = memcpy(destination_sockaddr, rp->ai_addr, sizeof(rp->ai_addr));
-            socka_in = (struct sockaddr_in *)destination_sockaddr;
             dest_address.dest_addr = destination_sockaddr;
             dest_address.addr_len = rp->ai_addrlen;
-            // printf("finish getsokc_addr\n");
             return dest_address;
         }
     }

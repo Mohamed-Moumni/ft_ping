@@ -14,9 +14,11 @@
 #include <netinet/ip.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <sys/time.h>
 
 #define BUFFER 65536
 #define REQ_BUFF 1024
+#define PAYLOAD_BUFF 56
 
 #define HELP 0
 #define VERSION 1
@@ -37,8 +39,8 @@ typedef struct ping_opt
 
 typedef struct ft_icmp
 {
-    struct icmphdr icmp_header;
-    void *data;
+    struct icmphdr  icmp_header;
+    unsigned char   data[56];
 } icmp_h;
 
 typedef struct destionation_sockaddr
@@ -49,9 +51,9 @@ typedef struct destionation_sockaddr
 
 typedef struct ping_cmd
 {
-    char            *destination;
-    ping_opt        *options;
-    dest_sockaddr   dest_sockaddr;
+    char *destination;
+    ping_opt *options;
+    dest_sockaddr dest_sockaddr;
 } p_cmd;
 
 typedef struct ping_packet
@@ -60,6 +62,10 @@ typedef struct ping_packet
     uint16_t id;
     uint16_t sequence;
     int socket;
+    size_t packet_sent;
+    size_t packet_received;
+    size_t received_bytes;
+    struct timeval start_time;
     // start time
     // packets sent
     // packet recieved
