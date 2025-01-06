@@ -19,8 +19,7 @@ unsigned short calculate_checksum(void *b, int len)
 
 void ping_loop(void)
 {
-    ping_request->ping_counter = ping_request->ping_counter == 0 ? -1 : ping_request->ping_counter;
-    while (ping_request->ping_counter >= 0 || ping_request->ping_counter == -1)
+    while (ping_request->ping_counter > 0 || ping_request->ping_counter == -1)
     {
         ping_echo_replay();
         usleep(1000);
@@ -38,11 +37,11 @@ void ping_send_handler(int signal)
 
 void ping_echo_replay(void)
 {
-    char            recv_buff[BUFFER];
-    struct iphdr    *ip_header;
-    struct timeval  *sending_time;
-    icmp_h          *payload;
-    size_t          ip_header_len;
+    char recv_buff[BUFFER];
+    struct iphdr *ip_header;
+    struct timeval *sending_time;
+    icmp_h *payload;
+    size_t ip_header_len;
 
     memset(recv_buff, 0, BUFFER);
     size_t packet_len = recvfrom(ping_request->socket, recv_buff, BUFFER, 0, ping_request->ping_command->dest_sockaddr.dest_addr, &ping_request->ping_command->dest_sockaddr.addr_len);
@@ -53,12 +52,12 @@ void ping_echo_replay(void)
     ip_header = (struct iphdr *)recv_buff;
     ip_header_len = ip_header->ihl * 4;
     payload = (icmp_h *)(recv_buff + ip_header_len);
-    
+
     if (ping_request->rtt)
         sending_time = (struct timeval *)payload->data;
 
     if (payload->icmp_header.type == 0 && payload->icmp_header.un.echo.id == ping_request->id)
-        print_ping_packet(payload->icmp_header.un.echo.sequence, sending_time);
+        print_ping_packet(payload->icmp_header.un.echo.sequence, sending_time, ip_header->ttl);
 }
 
 void ping_send_echo(void)
@@ -69,7 +68,6 @@ void ping_send_echo(void)
     struct timeval sending_time;
 
     memset(buffer, 0, REQ_BUFF);
-
     buffer_send = (icmp_h *)buffer;
     memset(buffer_send->data, 0, PAYLOAD_BUFF);
 
@@ -98,8 +96,9 @@ void ping_init(p_cmd *ping_command)
     ping_request->ping_command = ping_command;
     ping_request->id = getpid();
     ping_request->sequence = 1;
-    ping_request->bytes_sent = ping_request->ping_command->options[SEND_BUFF] > 0 ? ping_request->ping_command->options[SEND_BUFF] + 8 : 64;
-    ping_request->ping_counter = MAX(ping_request->ping_command->options[DEADLINE], ping_request->ping_command->options[COUNT]);
+    ping_request->bytes_sent = ping_request->ping_command->options[SEND_BUFF] >= 0 ? ping_request->ping_command->options[SEND_BUFF] : 56;
+    ping_request->bytes_received = ping_request->ping_command->options[SEND_BUFF] >= 0 ? ping_request->ping_command->options[SEND_BUFF] + 8 : 64;
+    ping_request->ping_counter = ping_request->ping_command->options[DEADLINE] >= 0 ? ping_request->ping_command->options[DEADLINE] : MAX(ping_request->ping_command->options[DEADLINE], ping_request->ping_command->options[COUNT]);
     ping_request->rtt = ping_request->bytes_sent >= 16 ? true : false;
 }
 
@@ -112,5 +111,5 @@ void socket_init(void)
     print_ping_start();
     signal(SIGALRM, ping_send_handler);
     signal(SIGINT, ping_exit_hanlder);
-        alarm(1);
+    alarm(1);
 }

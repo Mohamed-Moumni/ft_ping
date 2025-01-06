@@ -62,7 +62,7 @@ p_cmd *ping_parser(int arg_num, const char **args)
     if (!ping_command)
         error_exit("Malloc Ping Command: Memory Allocation Error");
     ping_command->destination = NULL;
-    memset(ping_command->options, 0, OPTIONS);
+    memset(ping_command->options, -1, sizeof(int) * OPTIONS);
 
     for (size_t i = 0; i < arg_num; i++)
     {

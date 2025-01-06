@@ -16,7 +16,7 @@ void error_exit(const char *error_msg)
     exit(1);
 }
 
-size_t get_option_value(const char *value)
+int get_option_value(const char *value)
 {
     if (!value)
         error_exit("option requires an argument --");
@@ -25,7 +25,7 @@ size_t get_option_value(const char *value)
         for (size_t i = 0; i < strlen(value); i++)
         {
             if (!isdigit(value[i]))
-                error_exit("Invalid Option value");
+                error_exit("out of range: 0 <= value <= 2147483647");
         }
     }
     return atoi(value);
@@ -48,21 +48,21 @@ double calculate_rtt(struct timeval *sending_time)
     return rtt;
 }
 
-void print_ping_packet(const int seq, struct timeval *sending_time)
+void print_ping_packet(const int seq, struct timeval *sending_time, const int ttl)
 {
     if (ping_request->ping_command->options[NUMERIC_ONLY] != -1)
     {
         if (ping_request->rtt)
-            printf("%d bytes from xx (%s): icmp_seq=%d ttl=x time=%.2f ms\n", ping_request->bytes_sent, ping_request->ping_command->network_repr, seq, calculate_rtt(sending_time));
+            printf("%d bytes from xx (%s): icmp_seq=%d ttl=%d time=%.2f ms\n", ping_request->bytes_received, ping_request->ping_command->network_repr, seq, ttl, calculate_rtt(sending_time));
         else
-            printf("%d bytes from xx (%s): icmp_seq=%d ttl=x \n", ping_request->bytes_sent, ping_request->ping_command->network_repr, seq);
+            printf("%d bytes from xx (%s): icmp_seq=%d ttl=%d \n", ping_request->bytes_received, ping_request->ping_command->network_repr, seq, ttl);
     }
     else
     {
         if (ping_request->rtt)
-            printf("%d bytes from xx (%s): icmp_seq=%d ttl=x time=%.2f ms\n", ping_request->bytes_sent, ping_request->ping_command->network_repr, seq, calculate_rtt(sending_time));
+            printf("%d bytes from xx (%s): icmp_seq=%d ttl=%d time=%.2f ms\n", ping_request->bytes_received, ping_request->ping_command->network_repr, seq, ttl, calculate_rtt(sending_time));
         else
-            printf("%d bytes from xx (%s): icmp_seq=%d ttl=x\n", ping_request->bytes_sent, ping_request->ping_command->network_repr, seq);
+            printf("%d bytes from xx (%s): icmp_seq=%d ttl=%d\n", ping_request->bytes_received, ping_request->ping_command->network_repr, seq, ttl);
 
     }
 }

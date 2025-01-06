@@ -17,7 +17,7 @@
 #include <sys/time.h>
 #include <arpa/inet.h>
 
-#define BUFFER 65536
+#define BUFFER 1024
 #define REQ_BUFF 1024
 #define PAYLOAD_BUFF 56
 #define OPTIONS 7
@@ -60,8 +60,8 @@ typedef struct ping_packet
     uint16_t    sequence;
     uint16_t    packet_sent;
     uint16_t    packet_received;
-    uint16_t    received_bytes;
-    u_int16_t   bytes_sent;
+    uint16_t    bytes_sent;
+    uint16_t    bytes_received;
     size_t      ping_counter;
     int         socket;
     bool        rtt;
@@ -74,7 +74,7 @@ extern p_packet *ping_request;
 void ping_help(void);
 void error_exit(const char *error_msg);
 dest_sockaddr get_sock_addr(const char *host_addrr);
-size_t get_option_value(const char *value);
+int get_option_value(const char *value);
 
 /* Ping Parser Functions*/
 p_cmd *ping_parser(int arg_num, const char **args);
@@ -97,7 +97,7 @@ double calculate_rtt(struct timeval *sending_time);
 
 /* Ping Output Functions */
 void print_ping_start(void);
-void print_ping_packet(const int seq, struct timeval *sending_time);
+void print_ping_packet(const int seq, struct timeval *sending_time, const int ttl);
 void print_ping_stats(void);
 
 #endif
