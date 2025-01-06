@@ -33,15 +33,16 @@ int get_option_value(const char *value)
 
 void print_ping_start(void)
 {
-    printf("FT_PING %s (%s) %d() bytes of data.\n", ping_request->ping_command->destination, ping_request->ping_command->network_repr, ping_request->bytes_sent);
-
+    printf("FT_PING %s (%s) %d(%d) bytes of data.\n", ping_request->ping_command->destination, ping_request->ping_command->network_repr, ping_request->bytes_sent, ping_request->ip_header_sent);
+    if (gettimeofday(&ping_request->start_date, NULL) != 0)
+        error_exit("Gettime of Day Error");
 }
 
 double calculate_rtt(struct timeval *sending_time)
 {
     struct timeval receiving_time;
     double rtt;
-    
+
     if (gettimeofday(&receiving_time, NULL) != 0)
         error_exit("Get Time of Day Error");
     rtt = (receiving_time.tv_sec - (*sending_time).tv_sec) * 1000 + ((receiving_time.tv_usec - (*sending_time).tv_usec) * 0.001);
@@ -50,34 +51,38 @@ double calculate_rtt(struct timeval *sending_time)
 
 void print_ping_packet(const int seq, struct timeval *sending_time, const int ttl)
 {
+    double rtt = calculate_rtt(sending_time);
+
+    ping_request->max_time = MAX(ping_request->max_time, rtt);
+    ping_request->min_time = MIN(ping_request->min_time, rtt);
+
     if (ping_request->ping_command->options[NUMERIC_ONLY] != -1)
     {
         if (ping_request->rtt)
-            printf("%d bytes from xx (%s): icmp_seq=%d ttl=%d time=%.2f ms\n", ping_request->bytes_received, ping_request->ping_command->network_repr, seq, ttl, calculate_rtt(sending_time));
+            printf("%d bytes from %s (%s): icmp_seq=%d ttl=%d time=%.2f ms\n", ping_request->bytes_received, ping_request->ping_command->reverse_dns, ping_request->ping_command->network_repr, seq, ttl, rtt);
         else
-            printf("%d bytes from xx (%s): icmp_seq=%d ttl=%d \n", ping_request->bytes_received, ping_request->ping_command->network_repr, seq, ttl);
+            printf("%d bytes from %s (%s): icmp_seq=%d ttl=%d \n", ping_request->bytes_received, ping_request->ping_command->reverse_dns, ping_request->ping_command->network_repr, seq, ttl);
     }
     else
     {
         if (ping_request->rtt)
-            printf("%d bytes from xx (%s): icmp_seq=%d ttl=%d time=%.2f ms\n", ping_request->bytes_received, ping_request->ping_command->network_repr, seq, ttl, calculate_rtt(sending_time));
+            printf("%d bytes from %s (%s): icmp_seq=%d ttl=%d time=%.2f ms\n", ping_request->bytes_received, ping_request->ping_command->reverse_dns, ping_request->ping_command->network_repr, seq, ttl, rtt);
         else
-            printf("%d bytes from xx (%s): icmp_seq=%d ttl=%d\n", ping_request->bytes_received, ping_request->ping_command->network_repr, seq, ttl);
-
+            printf("%d bytes from %s (%s): icmp_seq=%d ttl=%d\n", ping_request->bytes_received, ping_request->ping_command->reverse_dns, ping_request->ping_command->network_repr, seq, ttl);
     }
 }
 
 void print_ping_stats(void)
 {
-    // double loss;
-    // double min;
-    // double 
+    double loss;
+    double total_time;
 
-    // loss = (ping_request->packet_received / ping_request->packet_sent) * 100;
-    // printf("--- %s ft_ping statistics ---\n", ping_request->ping_command->destination);
-    // printf("%d packets transmitted, %d received, %.f%% packet loss, time %.0f\n", ping_request->packet_sent, ping_request->packet_received, loss);
-    // printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n");
-    printf("END\n");
+    total_time = calculate_rtt(&ping_request->start_date);
+
+    loss = 100 - (ping_request->packet_received / ping_request->packet_sent) * 100;
+    printf("\n--- %s ft_ping statistics ---\n", ping_request->ping_command->destination);
+    printf("%d packets transmitted, %d received, %.f%% packet loss, time %.0fms\n", ping_request->packet_sent, ping_request->packet_received, loss, ping_request->total_time);
+    printf("rtt min/max/mdev = %.3f/%.3f ms\n", ping_request->min_time, ping_request->max_time);
 }
 
 void ping_exit_hanlder(int signal)

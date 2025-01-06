@@ -16,11 +16,13 @@
 #include <ctype.h>
 #include <sys/time.h>
 #include <arpa/inet.h>
+#include <limits.h>
 
 #define BUFFER 1024
 #define REQ_BUFF 1024
 #define PAYLOAD_BUFF 56
 #define OPTIONS 7
+#define NI_MAXHOST 1025
 
 #define HELP 0
 #define VERSION 1
@@ -30,6 +32,7 @@
 #define DEADLINE 5
 #define SEND_BUFF 6
 #define MAX(x, y) (x > y ? x : y)
+#define MIN(x, y) (x > y ? y : x)
 
 /* Ping Structrues*/
 
@@ -47,25 +50,31 @@ typedef struct destionation_sockaddr
 
 typedef struct ping_cmd
 {
-    char *destination;
-    char network_repr[INET_ADDRSTRLEN];
-    int options[OPTIONS];
-    dest_sockaddr dest_sockaddr;
+    char            *destination;
+    char            network_repr[INET_ADDRSTRLEN];
+    int             options[OPTIONS];
+    dest_sockaddr   dest_sockaddr;
+    char            reverse_dns[NI_MAXHOST];
 } p_cmd;
 
 typedef struct ping_packet
 {
-    p_cmd       *ping_command;
-    uint16_t    id;
-    uint16_t    sequence;
-    uint16_t    packet_sent;
-    uint16_t    packet_received;
-    uint16_t    bytes_sent;
-    uint16_t    bytes_received;
-    size_t      ping_counter;
-    int         socket;
-    bool        rtt;
-    double      total;
+    p_cmd           *ping_command;
+    uint16_t        id;
+    uint16_t        sequence;
+    uint16_t        packet_sent;
+    uint16_t        packet_received;
+    uint16_t        bytes_sent;
+    uint16_t        bytes_received;
+    size_t          ping_counter;
+    uint16_t        ip_header_sent;
+    struct timeval  start_date;
+    int             socket;
+    bool            rtt;
+    double          total_time;
+    double          min_time;
+    double          max_time;
+    double          avg_time;
 } p_packet;
 
 extern p_packet *ping_request;

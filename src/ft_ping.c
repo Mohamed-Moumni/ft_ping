@@ -78,14 +78,17 @@ void ping_send_echo(void)
     buffer_send->icmp_header.checksum = 0;
     data_len = sizeof(buffer_send->icmp_header);
     data_len += sizeof(struct timeval);
+
     if (gettimeofday(&sending_time, NULL) != 0)
         perror("Get time of Day Error: ");
     memcpy(buffer_send->data, &sending_time, sizeof(struct timeval));
     buffer_send->icmp_header.checksum = calculate_checksum(buffer, data_len);
+
     int send = sendto(ping_request->socket, buffer, data_len, 0, ping_request->ping_command->dest_sockaddr.dest_addr, ping_request->ping_command->dest_sockaddr.addr_len);
-    ping_request->packet_sent++;
     if (send < 0)
         perror("Send To Error: ");
+
+    ping_request->packet_sent++;
 }
 
 void ping_init(p_cmd *ping_command)
@@ -96,10 +99,18 @@ void ping_init(p_cmd *ping_command)
     ping_request->ping_command = ping_command;
     ping_request->id = getpid();
     ping_request->sequence = 1;
+    ping_request->packet_sent = 0;
+    ping_request->packet_received = 0;
+    ping_request->ip_header_sent = 20;
     ping_request->bytes_sent = ping_request->ping_command->options[SEND_BUFF] >= 0 ? ping_request->ping_command->options[SEND_BUFF] : 56;
     ping_request->bytes_received = ping_request->ping_command->options[SEND_BUFF] >= 0 ? ping_request->ping_command->options[SEND_BUFF] + 8 : 64;
     ping_request->ping_counter = ping_request->ping_command->options[DEADLINE] >= 0 ? ping_request->ping_command->options[DEADLINE] : MAX(ping_request->ping_command->options[DEADLINE], ping_request->ping_command->options[COUNT]);
     ping_request->rtt = ping_request->bytes_sent >= 16 ? true : false;
+    ping_request->min_time = INT_MAX;
+    ping_request->max_time = 0;
+    ping_request->avg_time = 0;
+    ping_request->total_time = 0;
+    ping_request->ip_header_sent += ping_request->bytes_received;
 }
 
 void socket_init(void)
@@ -109,7 +120,5 @@ void socket_init(void)
         error_exit("Socket: Socket creation Error");
     ping_request->socket = ping_sock;
     print_ping_start();
-    signal(SIGALRM, ping_send_handler);
-    signal(SIGINT, ping_exit_hanlder);
     alarm(1);
 }

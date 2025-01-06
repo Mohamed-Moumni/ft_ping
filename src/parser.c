@@ -40,18 +40,18 @@ void ping_option_check(p_cmd **ping_cmd, const char *arg, const char *value)
 void ping_destination_check(p_cmd **ping_command, const char *arg, dest_sockaddr *dest_addr)
 {
     struct sockaddr_in *sa;
-    // char host[1024];
-
-    // memset(host, 0, 1024);
+    int result;
 
     (*ping_command)->destination = (char *)arg;
     (*ping_command)->dest_sockaddr = get_sock_addr(arg);
+
     sa = (struct sockaddr_in *)dest_addr->dest_addr;
+
     inet_ntop(sa->sin_family, &sa->sin_addr, (*ping_command)->network_repr, INET_ADDRSTRLEN);
-    // sa->sin_addr.s_addr = inet_addr((*ping_command)->network_repr); // Convert string to binary representation
-    // Perform reverse DNS resolution
-    // int result = getnameinfo((*ping_command)->dest_sockaddr.dest_addr, (*ping_command)->dest_sockaddr.addr_len, host, sizeof(host), NULL, 0, 1024);
-    // printf("HOST: %s\n",host);
+
+    result = getnameinfo((struct sockaddr *)sa, sizeof(struct sockaddr_in), (*ping_command)->reverse_dns, NI_MAXHOST, NULL, 0, 0);
+    if (result != 0)
+        error_exit("Get Name Info Error");
 }
 
 p_cmd *ping_parser(int arg_num, const char **args)
@@ -63,6 +63,7 @@ p_cmd *ping_parser(int arg_num, const char **args)
         error_exit("Malloc Ping Command: Memory Allocation Error");
     ping_command->destination = NULL;
     memset(ping_command->options, -1, sizeof(int) * OPTIONS);
+    memset(ping_command->reverse_dns, 0, sizeof(char) * NI_MAXHOST);
 
     for (size_t i = 0; i < arg_num; i++)
     {
