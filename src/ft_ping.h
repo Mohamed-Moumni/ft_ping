@@ -38,27 +38,28 @@
 
 typedef struct ft_icmp
 {
-    struct icmphdr icmp_header;
-    unsigned char data[56];
+    struct icmphdr  icmp_header;
+    unsigned char   data[56];
 } icmp_h;
 
 typedef struct destionation_sockaddr
 {
     struct sockaddr *dest_addr;
-    socklen_t addr_len;
+    socklen_t       addr_len;
 } dest_sockaddr;
 
 typedef struct ping_cmd
 {
     char            *destination;
     char            network_repr[INET_ADDRSTRLEN];
+    char            reverse_dns[NI_MAXHOST];
     int             options[OPTIONS];
     dest_sockaddr   dest_sockaddr;
-    char            reverse_dns[NI_MAXHOST];
 } p_cmd;
 
 typedef struct ping_packet
 {
+    struct timeval  start_date;
     p_cmd           *ping_command;
     uint16_t        id;
     uint16_t        sequence;
@@ -68,7 +69,6 @@ typedef struct ping_packet
     uint16_t        bytes_received;
     size_t          ping_counter;
     uint16_t        ip_header_sent;
-    struct timeval  start_date;
     int             socket;
     bool            rtt;
     double          total_time;
@@ -80,33 +80,34 @@ typedef struct ping_packet
 extern p_packet *ping_request;
 
 /*   Utils Functions */
-void ping_help(void);
-void error_exit(const char *error_msg);
-dest_sockaddr get_sock_addr(const char *host_addrr);
-int get_option_value(const char *value);
+void            ping_help(void);
+void            error_exit(const char *error_msg);
+dest_sockaddr   get_sock_addr(const char *host_addrr);
+int             get_option_value(const char *value);
+void            show_version(void);
 
 /* Ping Parser Functions*/
-p_cmd *ping_parser(int arg_num, const char **args);
-void ping_option_check(p_cmd **ping_cmd, const char *arg, const char *value);
-void ping_destination_check(p_cmd **ping_command, const char *arg, dest_sockaddr *dest_addr);
+p_cmd * ping_parser(int arg_num, const char **args);
+void    ping_option_check(p_cmd **ping_cmd, const char *arg, const char *value);
+void    ping_destination_check(p_cmd **ping_command, const char *arg, dest_sockaddr *dest_addr);
 
 /* Ping Functions */
-void setup_ping_socket(void);
-struct icmphdr prep_echo_request(uint16_t pid, uint16_t seq);
-uint16_t calcualte_checksum(unsigned char *data);
-void send_request(void);
-void ping_loop(void);
-void ping_send_handler(int signal);
-void ping_exit_hanlder(int signal);
-void ping_send_echo(void);
-void ping_init(p_cmd *ping_command);
-void socket_init(void);
-void ping_echo_replay(void);
-double calculate_rtt(struct timeval *sending_time);
+void            setup_ping_socket(void);
+struct icmphdr  prep_echo_request(uint16_t pid, uint16_t seq);
+uint16_t        calcualte_checksum(unsigned char *data);
+void            send_request(void);
+void            ping_loop(void);
+void            ping_send_handler(int signal);
+void            ping_exit_handler(int signal);
+void            ping_send_echo(void);
+void            ping_init(p_cmd *ping_command);
+void            socket_init(void);
+void            ping_echo_replay(void);
+double          calculate_rtt(struct timeval *sending_time);
 
 /* Ping Output Functions */
-void print_ping_start(void);
-void print_ping_packet(const int seq, struct timeval *sending_time, const int ttl);
-void print_ping_stats(void);
+void    print_ping_start(void);
+void    print_ping_packet(const int seq, struct timeval *sending_time, const int ttl, const double rtt);
+void    print_ping_stats(void);
 
 #endif
