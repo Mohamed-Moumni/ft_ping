@@ -110,7 +110,7 @@ void ping_init(p_cmd *ping_command)
     ping_request->ip_header_sent = 20;
     ping_request->bytes_sent = ping_request->ping_command->options[SEND_BUFF] >= 0 ? ping_request->ping_command->options[SEND_BUFF] : 56;
     ping_request->bytes_received = ping_request->ping_command->options[SEND_BUFF] >= 0 ? ping_request->ping_command->options[SEND_BUFF] + 8 : 64;
-    ping_request->ping_counter = ping_request->ping_command->options[DEADLINE] >= 0 ? ping_request->ping_command->options[DEADLINE] : MAX(ping_request->ping_command->options[DEADLINE], ping_request->ping_command->options[COUNT]);
+    ping_request->ping_counter = MIN(ping_request->ping_command->options[DEADLINE], ping_request->ping_command->options[COUNT]) >= 0 ? MIN(ping_request->ping_command->options[DEADLINE], ping_request->ping_command->options[COUNT]) : 0;
     ping_request->rtt = ping_request->bytes_sent >= 16 ? true : false;
     ping_request->min_time = INT_MAX;
     ping_request->max_time = 0;

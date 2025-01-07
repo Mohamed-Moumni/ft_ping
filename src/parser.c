@@ -1,6 +1,6 @@
 #include "ft_ping.h"
 
-void ping_option_check(p_cmd **ping_cmd, const char *arg, const char *value)
+void ping_option_check(p_cmd **ping_cmd, const char *arg, const char *value, int * i)
 {
     size_t count;
 
@@ -13,25 +13,32 @@ void ping_option_check(p_cmd **ping_cmd, const char *arg, const char *value)
         case 'h':
             (*ping_cmd)->options[HELP] = 1;
             ping_help();
+            (*i)++;
             break;
         case 'V':
             (*ping_cmd)->options[VERSION] = 1;
             show_version();
+            (*i)++;
             break;
         case 'v':
             (*ping_cmd)->options[VERBOSE] = 1;
+            (*i)++;
             break;
         case 'n':
             (*ping_cmd)->options[NUMERIC_ONLY] = 1;
+            (*i)++;
             break;
         case 'c':
             (*ping_cmd)->options[COUNT] = get_option_value(value);
+            (*i) += 2;
             break;
         case 'w':
             (*ping_cmd)->options[DEADLINE] = get_option_value(value);
+            (*i) += 2;
             break;
         case 's':
             (*ping_cmd)->options[SEND_BUFF] = get_option_value(value);
+            (*i) += 2;
             break;
         default:
             error_exit("ft_ping: Invalid Option");
@@ -61,7 +68,7 @@ void ping_destination_check(p_cmd **ping_command, const char *arg, dest_sockaddr
 p_cmd *ping_parser(int arg_num, const char **args)
 {
     p_cmd       *ping_command;
-    size_t      i;
+    int         i;
 
     ping_command = malloc(sizeof(p_cmd));
     if (!ping_command)
@@ -70,20 +77,15 @@ p_cmd *ping_parser(int arg_num, const char **args)
     memset(ping_command->options, -1, sizeof(int) * OPTIONS);
     memset(ping_command->reverse_dns, 0, sizeof(char) * NI_MAXHOST);
 
+    i = 0;
     while (i < arg_num)
     {
         if (args[i][0] == '-')
         {
             if (i + 1 < arg_num)
-            {
-                ping_option_check(&ping_command, args[i], args[i + 1]);
-                i += 2;
-            }
+                ping_option_check(&ping_command, args[i], args[i + 1], &i);
             else
-            {
-                ping_option_check(&ping_command, args[i], NULL);
-                i++;
-            }
+                ping_option_check(&ping_command, args[i], NULL, &i);
         }
         else
         {

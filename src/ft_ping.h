@@ -88,7 +88,7 @@ void            show_version(void);
 
 /* Ping Parser Functions*/
 p_cmd * ping_parser(int arg_num, const char **args);
-void    ping_option_check(p_cmd **ping_cmd, const char *arg, const char *value);
+void    ping_option_check(p_cmd **ping_cmd, const char *arg, const char *value, int *i);
 void    ping_destination_check(p_cmd **ping_command, const char *arg, dest_sockaddr *dest_addr);
 
 /* Ping Functions */
