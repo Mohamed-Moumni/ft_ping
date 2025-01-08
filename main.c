@@ -12,11 +12,6 @@ int main(int ac, const char *av[])
 
     ping_cmd = ping_parser(ac - 1, &av[1]);
     ping_init(ping_cmd);
-    for (int i = 0; i < 7;i++)
-    {
-        printf("%d\n", ping_request->ping_command->options[i]);
-    }
-    printf("Counter: %ld\n", ping_request->ping_counter);
     signal(SIGALRM, ping_send_handler);
     signal(SIGINT, ping_exit_handler);
     socket_init();

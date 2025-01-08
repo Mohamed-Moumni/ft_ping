@@ -71,21 +71,24 @@ void print_ping_packet(const int seq, struct timeval *sending_time, const int tt
             printf("%d bytes from %s (%s): icmp_seq=%d ttl=%d \n", ping_request->bytes_received, ping_request->ping_command->reverse_dns, ping_request->ping_command->network_repr, seq, ttl);
     }
     ping_request->total_time += rtt;
+    add_mdev_list(&ping_request->mdev, create_mdev_list(rtt));
 }
 
 void print_ping_stats(void)
 {
     double loss;
     double total_time;
+    double mdev;
 
     total_time = calculate_rtt(&ping_request->start_date);
 
     loss = 100 - (ping_request->packet_received / ping_request->packet_sent) * 100;
+    mdev = calculate_mdev();
     printf("\n--- %s ft_ping statistics ---\n", ping_request->ping_command->destination);
     if (ping_request->rtt)
     {
         printf("%d packets transmitted, %d received, %.f%% packet loss, time %.0fms\n", ping_request->packet_sent, ping_request->packet_received, loss, total_time);
-        printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f ms\n", ping_request->min_time, ping_request->total_time / ping_request->packet_received, ping_request->max_time);
+        printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", ping_request->min_time, ping_request->total_time / ping_request->packet_received, ping_request->max_time, mdev);
     }
 }
 
@@ -99,4 +102,64 @@ void show_version(void)
 {
     printf("ft_ping 1.0\n");
     exit(0);
+}
+
+mdev *create_mdev_list(const double rtt)
+{
+    mdev *ping_mdev = (mdev *)malloc(sizeof(mdev));
+    if (!ping_mdev)
+        error_exit("Malloc: Memory Allocation Error");
+    ping_mdev->rtt = rtt;
+    ping_mdev->next = NULL;
+    return ping_mdev;
+}
+
+mdev *last_mdev(mdev *ping_mdev_list)
+{
+    mdev *ping_temp = ping_mdev_list;
+
+    while (ping_temp->next != NULL)
+    {
+        ping_temp = ping_temp->next;
+    }
+    return ping_temp;
+}
+
+void add_mdev_list(mdev **ping_mdev_list, mdev *new_mdev)
+{
+    mdev *last_mdev_list;
+
+    if (*ping_mdev_list == NULL)
+        (*ping_mdev_list) = new_mdev;
+    else
+    {
+        last_mdev_list = last_mdev(*ping_mdev_list);
+        last_mdev_list->next = new_mdev;
+    }
+}
+
+double calculate_mdev(void)
+{
+    double n;
+    double sum;
+    double mean;
+    mdev *temp;
+
+    n = ping_request->packet_received;
+    sum = 0;
+    mean = 0;
+    temp = ping_request->mdev;
+    while (temp != NULL)
+    {
+        mean += temp->rtt;
+        temp = temp->next;
+    }
+    mean /= n;
+    temp = ping_request->mdev;
+    while (temp != NULL)
+    {
+        sum += pow(2, (temp->rtt - mean));
+        temp = temp->next;
+    }
+    return sqrt(sum / n);
 }
