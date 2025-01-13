@@ -1,11 +1,10 @@
-#include "./src/ft_ping.h"
+#include "ft_ping.h"
 
 p_packet * ping_request;
 
 int main(int ac, const char *av[])
 {
     p_cmd *ping_cmd;
-    int ping_sock;
 
     if (ac - 1 < 1)
         error_exit("Destination address required");

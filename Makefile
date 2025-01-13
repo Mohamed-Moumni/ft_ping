@@ -1,22 +1,26 @@
 NAME = ft_ping
 
-CPP = gcc
+CC = gcc
 
 FLAGS = -Wall -Wextra -Werror
 
-SRC = src/parser.c src/utils.c src/ft_ping.c main.c
+SRC_FOLDER = src
 
-HEADER = ft_ping.h
+OBJ_FOLDER = src
+
+SRC = src/utils.c src/ft_ping.c src/main.c src/parser.c
+
+HEADER = src/ft_ping.h
 
 OBJ = $(SRC:.c=.o)
 
 all: $(NAME)
 
 $(NAME):$(OBJ)
-	$(CPP) $(FLAGS) -o $(NAME) $(OBJ) -lm 
+	$(CC) $(FLAGS) -o $(NAME) $(OBJ) -lm 
 
-%.o:%.c $(HEADER)
-	$(CPP) $(FLAGS) -c $< -o $@
+$(OBJ_FOLDER)/%.o:$(OBJ_FOLDER)/%.c $(HEADER)
+	$(CC) $(FLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJ)

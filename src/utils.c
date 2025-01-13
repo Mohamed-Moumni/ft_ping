@@ -51,7 +51,7 @@ double calculate_rtt(struct timeval *sending_time)
     return rtt;
 }
 
-void print_ping_packet(const int seq, struct timeval *sending_time, const int ttl, const double rtt)
+void print_ping_packet(const int seq, const int ttl, const double rtt)
 {
     ping_request->max_time = MAX(ping_request->max_time, rtt);
     ping_request->min_time = MIN(ping_request->min_time, rtt);
@@ -94,6 +94,7 @@ void print_ping_stats(void)
 
 void ping_exit_handler(int signal)
 {
+    (void)signal;
     print_ping_stats();
     exit(0);
 }

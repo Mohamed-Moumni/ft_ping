@@ -31,22 +31,23 @@ void ping_loop(void)
 
 void ping_send_handler(int signal)
 {
+    (void)signal;
     ping_send_echo();
     alarm(1);
 }
 
 void ping_echo_replay(void)
 {
-    struct iphdr    *ip_header;
-    char            recv_buff[BUFFER];
-    struct timeval  *sending_time;
-    icmp_h          *payload;
-    size_t          ip_header_len;
-    double          rtt;
+    struct iphdr *ip_header;
+    char recv_buff[BUFFER];
+    struct timeval *sending_time;
+    icmp_h *payload;
+    size_t ip_header_len;
+    double rtt;
 
     sending_time = NULL;
     memset(recv_buff, 0, BUFFER);
-    size_t packet_len = recvfrom(ping_request->socket, recv_buff, BUFFER, 0, ping_request->ping_command->dest_sockaddr.dest_addr, &ping_request->ping_command->dest_sockaddr.addr_len);
+    int packet_len = recvfrom(ping_request->socket, recv_buff, BUFFER, 0, ping_request->ping_command->dest_sockaddr.dest_addr, &ping_request->ping_command->dest_sockaddr.addr_len);
     if (packet_len < 0)
         perror("Receiving the packet failed: ");
 
@@ -63,15 +64,15 @@ void ping_echo_replay(void)
     }
 
     if (payload->icmp_header.type == 0 && payload->icmp_header.un.echo.id == ping_request->id)
-        print_ping_packet(payload->icmp_header.un.echo.sequence, sending_time, ip_header->ttl, rtt);
+        print_ping_packet(payload->icmp_header.un.echo.sequence, ip_header->ttl, rtt);
 }
 
 void ping_send_echo(void)
 {
-    struct timeval  sending_time;
-    char            buffer[REQ_BUFF];
-    icmp_h          *buffer_send;
-    size_t          data_len;
+    struct timeval sending_time;
+    char buffer[REQ_BUFF];
+    icmp_h *buffer_send;
+    size_t data_len;
 
     memset(buffer, 0, REQ_BUFF);
     buffer_send = (icmp_h *)buffer;

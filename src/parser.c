@@ -2,8 +2,6 @@
 
 void ping_option_check(p_cmd **ping_cmd, const char *arg, const char *value, int * i)
 {
-    size_t count;
-
     if (strlen(arg) != 2 || arg[1] == '-')
         error_exit("ft_ping: invalid Option");
     else
@@ -121,7 +119,7 @@ dest_sockaddr get_sock_addr(const char *host_addrr)
             dest_address.dest_addr = (struct sockaddr *)malloc(sizeof(struct sockaddr));
             if (!dest_address.dest_addr)
                 error_exit("Malloc: Memory Allocation Error");
-            memcpy(dest_address.dest_addr, rp->ai_addr, sizeof(rp->ai_addr));
+            memcpy(dest_address.dest_addr, rp->ai_addr, sizeof(struct sockadd));
             dest_address.addr_len = rp->ai_addrlen;
             freeaddrinfo(result);
             return dest_address;

@@ -74,7 +74,7 @@ typedef struct ping_packet
     uint16_t packet_received;
     uint16_t bytes_sent;
     uint16_t bytes_received;
-    size_t ping_counter;
+    int ping_counter;
     uint16_t ip_header_sent;
     int socket;
     bool rtt;
@@ -88,14 +88,14 @@ typedef struct ping_packet
 extern p_packet *ping_request;
 
 /*   Utils Functions */
-void            ping_help(void);
-void            error_exit(const char *error_msg);
-dest_sockaddr   get_sock_addr(const char *host_addrr);
-int             get_option_value(const char *value);
-void            show_version(void);
-mdev            *create_mdev_list(const double mdev);
-mdev            *last_mdev(mdev *ping_mdev_list);
-void            add_mdev_list(mdev **ping_mdev_list, mdev *new_mdev);
+void ping_help(void);
+void error_exit(const char *error_msg);
+dest_sockaddr get_sock_addr(const char *host_addrr);
+int get_option_value(const char *value);
+void show_version(void);
+mdev *create_mdev_list(const double mdev);
+mdev *last_mdev(mdev *ping_mdev_list);
+void add_mdev_list(mdev **ping_mdev_list, mdev *new_mdev);
 
 /* Ping Parser Functions*/
 p_cmd *ping_parser(int arg_num, const char **args);
@@ -119,7 +119,7 @@ double calculate_mdev(void);
 
 /* Ping Output Functions */
 void print_ping_start(void);
-void print_ping_packet(const int seq, struct timeval *sending_time, const int ttl, const double rtt);
+void print_ping_packet(const int seq, const int ttl, const double rtt);
 void print_ping_stats(void);
 
 #endif
