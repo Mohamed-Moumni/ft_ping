@@ -101,7 +101,7 @@ dest_sockaddr get_sock_addr(const char *host_addrr)
     struct addrinfo *result;
     struct addrinfo hints;
     struct addrinfo *rp;
-    dest_sockaddr   dest_address;
+    dest_sockaddr   dest_address = {0};
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
@@ -119,7 +119,7 @@ dest_sockaddr get_sock_addr(const char *host_addrr)
             dest_address.dest_addr = (struct sockaddr *)malloc(sizeof(struct sockaddr));
             if (!dest_address.dest_addr)
                 error_exit("Malloc: Memory Allocation Error");
-            memcpy(dest_address.dest_addr, rp->ai_addr, sizeof(struct sockadd));
+            memcpy(dest_address.dest_addr, rp->ai_addr, rp->ai_addrlen);
             dest_address.addr_len = rp->ai_addrlen;
             freeaddrinfo(result);
             return dest_address;
@@ -127,4 +127,5 @@ dest_sockaddr get_sock_addr(const char *host_addrr)
     }
     freeaddrinfo(result);
     error_exit("get addr info address not found");
+    return dest_address;
 }
