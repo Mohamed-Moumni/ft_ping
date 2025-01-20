@@ -28,8 +28,11 @@ int get_option_value(const char *value)
     {
         for (size_t i = 0; i < strlen(value); i++)
         {
-            if (!isdigit(value[i]))
+            if (value[i] == '+' || value[i] == '-')
                 error_exit("out of range: 0 <= value <= 2147483647");
+
+            if (!isdigit(value[i]))
+                error_exit("invalid argument");
         }
     }
     return atoi(value);
@@ -163,4 +166,10 @@ double calculate_mdev(void)
         temp = temp->next;
     }
     return sqrt(sum / n);
+}
+
+void check_count(int count)
+{
+    if (count == 0)
+        error_exit("invalid argument: '0': out of range: 1 <= value <= 9223372036854775807");
 }

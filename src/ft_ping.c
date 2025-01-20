@@ -19,12 +19,18 @@ unsigned short calculate_checksum(void *b, int len)
 
 void ping_loop(void)
 {
-    while (ping_request->ping_counter > 0 || ping_request->ping_counter == -1)
+    while (true)
     {
         ping_echo_replay();
         usleep(1000);
-        if (ping_request->ping_counter > 0)
-            ping_request->ping_counter--;
+        
+        if (ping_request->active)
+        {
+            ping_request->deadline_counter--;
+            ping_request->sending_counter--;
+            if (!ping_request->deadline_counter || !ping_request->sending_counter)
+                break;
+        }
     }
     print_ping_stats();
 }
@@ -110,7 +116,6 @@ void ping_init(p_cmd *ping_command)
     ping_request->ip_header_sent = 20;
     ping_request->bytes_sent = ping_request->ping_command->options[SEND_BUFF] >= 0 ? ping_request->ping_command->options[SEND_BUFF] : 56;
     ping_request->bytes_received = ping_request->ping_command->options[SEND_BUFF] >= 0 ? ping_request->ping_command->options[SEND_BUFF] + 8 : 64;
-    ping_request->ping_counter = MIN(ping_request->ping_command->options[DEADLINE], ping_request->ping_command->options[COUNT]);
     ping_request->rtt = ping_request->bytes_sent >= 16 ? true : false;
     ping_request->min_time = INT_MAX;
     ping_request->max_time = 0;
@@ -118,6 +123,9 @@ void ping_init(p_cmd *ping_command)
     ping_request->total_time = 0;
     ping_request->ip_header_sent += ping_request->bytes_received;
     ping_request->mdev = NULL;
+    ping_request->deadline_counter = ping_request->ping_command->options[DEADLINE];
+    ping_request->sending_counter = ping_request->ping_command->options[COUNT];
+    ping_request->active = ping_request->ping_command->options[DEADLINE] > 0 || ping_request->ping_command->options[COUNT] ? true : false;
 }
 
 void socket_init(void)

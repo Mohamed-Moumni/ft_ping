@@ -74,7 +74,8 @@ typedef struct ping_packet
     uint16_t packet_received;
     uint16_t bytes_sent;
     uint16_t bytes_received;
-    int ping_counter;
+    int      deadline_counter;
+    int      sending_counter;
     uint16_t ip_header_sent;
     int socket;
     bool rtt;
@@ -83,6 +84,7 @@ typedef struct ping_packet
     double max_time;
     double avg_time;
     mdev *mdev;
+    bool active;
 } p_packet;
 
 extern p_packet *ping_request;
@@ -116,6 +118,7 @@ void socket_init(void);
 void ping_echo_replay(void);
 double calculate_rtt(struct timeval *sending_time);
 double calculate_mdev(void);
+void check_count(int count);
 
 /* Ping Output Functions */
 void print_ping_start(void);

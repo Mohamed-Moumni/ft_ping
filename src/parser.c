@@ -28,6 +28,7 @@ void ping_option_check(p_cmd **ping_cmd, const char *arg, const char *value, int
             break;
         case 'c':
             (*ping_cmd)->options[COUNT] = get_option_value(value);
+            check_count((*ping_cmd)->options[COUNT]);
             (*i) += 2;
             break;
         case 'w':
