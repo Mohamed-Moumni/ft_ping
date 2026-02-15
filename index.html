@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ft_ping - Network Diagnostics Reimagined</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ff88;
+            --secondary: #00ccff;
+            --dark: #0a0e1a;
+            --darker: #050810;
+            --gray: #8892a6;
+            --light-gray: #c4cad8;
+            --accent: #ff3366;
+            --warning: #ffaa00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--darker);
+            color: var(--light-gray);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Animated background grid */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            padding: 2rem 0;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(5, 8, 16, 0.8);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-decoration: none;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 8rem 0 6rem;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 100px;
+            color: var(--primary);
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-description {
+            font-size: 1.25rem;
+            color: var(--gray);
+            max-width: 600px;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 1rem;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--darker);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 30px rgba(0, 255, 136, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--light-gray);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        /* Terminal Demo */
+        .terminal-section {
+            padding: 4rem 0;
+            animation: fadeInUp 0.8s ease-out 0.8s both;
+        }
+
+        .terminal {
+            background: rgba(10, 14, 26, 0.8);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .terminal-header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background: #ff5f56; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #27c93f; }
+
+        .terminal-body {
+            padding: 2rem;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .terminal-line {
+            display: block;
+            margin-bottom: 0.5rem;
+            animation: typeIn 0.5s ease-out both;
+        }
+
+        .terminal-line:nth-child(1) { animation-delay: 1s; }
+        .terminal-line:nth-child(2) { animation-delay: 1.2s; }
+        .terminal-line:nth-child(3) { animation-delay: 1.4s; }
+        .terminal-line:nth-child(4) { animation-delay: 1.6s; }
+        .terminal-line:nth-child(5) { animation-delay: 1.8s; }
+        .terminal-line:nth-child(6) { animation-delay: 2s; }
+
+        @keyframes typeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .prompt { color: var(--primary); }
+        .output { color: var(--light-gray); }
+        .stat { color: var(--secondary); }
+        .warning { color: var(--warning); }
+
+        /* Features Grid */
+        .features {
+            padding: 6rem 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-tag {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: rgba(0, 204, 255, 0.1);
+            border: 1px solid rgba(0, 204, 255, 0.3);
+            border-radius: 100px;
+            color: var(--secondary);
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            color: var(--gray);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(10, 14, 26, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(0, 255, 136, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .feature-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-description {
+            color: var(--gray);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Tech Stack */
+        .tech-stack {
+            padding: 6rem 0;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .tech-category {
+            background: rgba(10, 14, 26, 0.8);
+            border: 1px solid rgba(0, 255, 136, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .tech-category-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tech-list {
+            list-style: none;
+        }
+
+        .tech-list li {
+            padding: 0.5rem 0;
+            color: var(--light-gray);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tech-list li::before {
+            content: '▹';
+            color: var(--secondary);
+        }
+
+        /* Stats Section */
+        .stats {
+            padding: 6rem 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 3rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        .stat-item {
+            position: relative;
+        }
+
+        .stat-number {
+            font-family: 'Syne', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 1rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 8rem 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .cta-content {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .cta-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .cta-description {
+            color: var(--gray);
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+        }
+
+        /* Footer */
+        footer {
+            padding: 3rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .footer-links a {
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .copyright {
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .cta-title {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Scroll animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="logo">
+                    <div class="logo-icon"></div>
+                    ft_ping
+                </a>
+                <nav>
+                    <ul class="nav-links">
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#tech">Tech Stack</a></li>
+                        <li><a href="#metrics">Metrics</a></li>
+                        <li><a href="https://github.com/Mohamed-Moumni/ft_ping" target="_blank">GitHub</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <div class="hero-badge">🚀 Network Diagnostics • Low-Level Systems • DevOps Ready</div>
+                <h1>Network Ping<br>Reimagined</h1>
+                <p class="hero-description">
+                    A production-grade ICMP implementation built from scratch in C. 
+                    Demonstrating expertise in low-level networking, systems programming, 
+                    and DevOps infrastructure tooling.
+                </p>
+                <div class="cta-group">
+                    <a href="https://github.com/Mohamed-Moumni/ft_ping" target="_blank" class="btn btn-primary">
+                        View on GitHub →
+                    </a>
+                    <a href="#features" class="btn btn-secondary">
+                        Explore Features
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="terminal-section">
+            <div class="container">
+                <div class="terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-dot dot-red"></div>
+                        <div class="terminal-dot dot-yellow"></div>
+                        <div class="terminal-dot dot-green"></div>
+                    </div>
+                    <div class="terminal-body">
+                        <span class="terminal-line"><span class="prompt">$</span> sudo ./ft_ping google.com</span>
+                        <span class="terminal-line output">PING google.com (142.250.185.46): 56 data bytes</span>
+                        <span class="terminal-line output">64 bytes from 142.250.185.46: icmp_seq=0 ttl=117 time=<span class="stat">12.4 ms</span></span>
+                        <span class="terminal-line output">64 bytes from 142.250.185.46: icmp_seq=1 ttl=117 time=<span class="stat">11.9 ms</span></span>
+                        <span class="terminal-line output">64 bytes from 142.250.185.46: icmp_seq=2 ttl=117 time=<span class="stat">13.1 ms</span></span>
+                        <span class="terminal-line output">--- google.com ping statistics ---</span>
+                        <span class="terminal-line stat">3 packets transmitted, 3 received, 0% packet loss, time 2003ms</span>
+                        <span class="terminal-line stat">rtt min/avg/max/mdev = 11.9/12.5/13.1/0.5 ms</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <div class="container">
+                <div class="section-header fade-in">
+                    <div class="section-tag">Core Capabilities</div>
+                    <h2 class="section-title">Production-Grade Features</h2>
+                    <p class="section-subtitle">
+                        Built with the same rigor and attention to detail as enterprise networking tools
+                    </p>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">🔌</div>
+                        <h3 class="feature-title">Raw Socket Programming</h3>
+                        <p class="feature-description">
+                            Direct manipulation of network packets using SOCK_RAW. Full control over ICMP protocol implementation with manual header construction.
+                        </p>
+                    </div>
+
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">⚡</div>
+                        <h3 class="feature-title">High-Precision Timing</h3>
+                        <p class="feature-description">
+                            Microsecond-accurate RTT calculations using signal handling and precise timing mechanisms for accurate network latency measurement.
+                        </p>
+                    </div>
+
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">🔒</div>
+                        <h3 class="feature-title">Checksum Validation</h3>
+                        <p class="feature-description">
+                            RFC-compliant checksum calculation and verification ensuring packet integrity across network transmission.
+                        </p>
+                    </div>
+
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">🌐</div>
+                        <h3 class="feature-title">DNS Resolution</h3>
+                        <p class="feature-description">
+                            Bidirectional DNS lookups with reverse resolution support. Handles both hostnames and IP addresses seamlessly.
+                        </p>
+                    </div>
+
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">📊</div>
+                        <h3 class="feature-title">Statistical Analysis</h3>
+                        <p class="feature-description">
+                            Comprehensive network metrics including min/max/avg/mdev calculations, packet loss tracking, and real-time performance monitoring.
+                        </p>
+                    </div>
+
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">⚙️</div>
+                        <h3 class="feature-title">Configurable Execution</h3>
+                        <p class="feature-description">
+                            Flexible command-line options for packet size, count limits, timeouts, and verbosity levels matching production ping utilities.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="tech-stack" id="tech">
+            <div class="container">
+                <div class="section-header fade-in">
+                    <div class="section-tag">Technical Implementation</div>
+                    <h2 class="section-title">Built with Systems Engineering Excellence</h2>
+                </div>
+
+                <div class="tech-grid">
+                    <div class="tech-category fade-in">
+                        <h3 class="tech-category-title">🔧 Core Technologies</h3>
+                        <ul class="tech-list">
+                            <li>C Programming Language</li>
+                            <li>POSIX System Calls</li>
+                            <li>Raw Socket API (SOCK_RAW)</li>
+                            <li>ICMP Protocol (RFC 792)</li>
+                            <li>Signal Handling (SIGALRM, SIGINT)</li>
+                        </ul>
+                    </div>
+
+                    <div class="tech-category fade-in">
+                        <h3 class="tech-category-title">🌐 Network Stack</h3>
+                        <ul class="tech-list">
+                            <li>IPv4 Implementation</li>
+                            <li>DNS Resolution (getaddrinfo)</li>
+                            <li>Reverse DNS Lookup</li>
+                            <li>Network Byte Order Handling</li>
+                            <li>Checksum Calculation</li>
+                        </ul>
+                    </div>
+
+                    <div class="tech-category fade-in">
+                        <h3 class="tech-category-title">💾 Systems Programming</h3>
+                        <ul class="tech-list">
+                            <li>Dynamic Memory Management</li>
+                            <li>Buffer Handling & Overflow Protection</li>
+                            <li>File Descriptor Management</li>
+                            <li>Error Handling & Validation</li>
+                            <li>Root Privilege Handling</li>
+                        </ul>
+                    </div>
+
+                    <div class="tech-category fade-in">
+                        <h3 class="tech-category-title">🔍 DevOps Relevance</h3>
+                        <ul class="tech-list">
+                            <li>Network Diagnostics Tool</li>
+                            <li>Infrastructure Monitoring</li>
+                            <li>Performance Metrics Collection</li>
+                            <li>Build System (Makefile)</li>
+                            <li>CI/CD Pipeline Integration Ready</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats" id="metrics">
+            <div class="container">
+                <div class="section-header fade-in">
+                    <div class="section-tag">Project Metrics</div>
+                    <h2 class="section-title">By The Numbers</h2>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-item fade-in">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">C Implementation</div>
+                    </div>
+
+                    <div class="stat-item fade-in">
+                        <div class="stat-number">~1000</div>
+                        <div class="stat-label">Lines of Code</div>
+                    </div>
+
+                    <div class="stat-item fade-in">
+                        <div class="stat-number">0</div>
+                        <div class="stat-label">External Dependencies</div>
+                    </div>
+
+                    <div class="stat-item fade-in">
+                        <div class="stat-number">μs</div>
+                        <div class="stat-label">Timing Precision</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <div class="container">
+                <div class="cta-content fade-in">
+                    <h2 class="cta-title">Ready to Explore the Code?</h2>
+                    <p class="cta-description">
+                        Dive into the implementation, examine the architecture, and see how low-level systems programming creates reliable infrastructure tooling.
+                    </p>
+                    <div class="cta-group" style="justify-content: center;">
+                        <a href="https://github.com/Mohamed-Moumni/ft_ping" target="_blank" class="btn btn-primary">
+                            View Repository →
+                        </a>
+                        <a href="https://github.com/Mohamed-Moumni/ft_ping/blob/main/README.md" target="_blank" class="btn btn-secondary">
+                            Read Documentation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="copyright">
+                    © 2026 Mohamed Moumni • Built for Platform Engineering Excellence
+                </div>
+                <ul class="footer-links">
+                    <li><a href="https://github.com/Mohamed-Moumni/ft_ping" target="_blank">GitHub</a></li>
+                    <li><a href="https://github.com/Mohamed-Moumni/ft_ping/blob/main/LICENSE" target="_blank">License</a></li>
+                    <li><a href="https://github.com/Mohamed-Moumni" target="_blank">Portfolio</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
